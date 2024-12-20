@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie Recommendation System</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+    }
+    .movie {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 10px 0;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .movie span {
+      font-weight: bold;
+    }
+    .rating-buttons button {
+      margin: 0 5px;
+      padding: 5px 10px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .rating-buttons button:hover {
+      background: #0056b3;
+    }
+    .recommendations {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Movie Recommendation System</h1>
+
+    <div id="movies">
+      <h2>Rate Movies</h2>
+      <!-- Movies will be dynamically loaded here -->
+    </div>
+
+    <div class="recommendations">
+      <h2>Recommended Movies</h2>
+      <ul id="recommendations-list">
+        <!-- Recommendations will appear here -->
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const movies = [
+      { id: 1, title: "Toy Story", genre: "Animation", year: 1995 },
+      { id: 2, title: "Frozen", genre: "Animation", year: 2013 },
+      { id: 3, title: "The Avengers", genre: "Action", year: 2012 },
+      { id: 4, title: "Finding Nemo", genre: "Animation", year: 2003 },
+      { id: 5, title: "Inception", genre: "Sci-Fi", year: 2010 }
+    ];
+
+    const userRatings = {}; // Store user ratings as { movieId: rating }
+
+    // Simulate other user profiles for recommendations
+    const otherUsers = [
+      { id: 1, ratings: { 1: 5, 2: 4, 3: 4, 4: 5, 5: 3 } },
+      { id: 2, ratings: { 1: 4, 2: 3, 3: 5, 4: 4, 5: 5 } }
+    ];
+
+    // Render movies for rating
+    function renderMovies() {
+      const moviesContainer = document.getElementById("movies");
+      movies.forEach((movie) => {
+        const movieDiv = document.createElement("div");
+        movieDiv.classList.add("movie");
+        movieDiv.innerHTML = `
+          <span>${movie.title} (${movie.year})</span>
+          <div class="rating-buttons">
+            <button onclick="rateMovie(${movie.id}, 1)">1</button>
+            <button onclick="rateMovie(${movie.id}, 2)">2</button>
+            <button onclick="rateMovie(${movie.id}, 3)">3</button>
+            <button onclick="rateMovie(${movie.id}, 4)">4</button>
+            <button onclick="rateMovie(${movie.id}, 5)">5</button>
+          </div>
+        `;
+        moviesContainer.appendChild(movieDiv);
+      });
+    }
+
+    // Handle movie rating
+    function rateMovie(movieId, rating) {
+      userRatings[movieId] = rating;
+      calculateRecommendations();
+    }
+
+    // Calculate similarity (e.g., Pearson correlation or simple average)
+    function calculateSimilarity(user1, user2) {
+      let commonMovies = 0;
+      let similarity = 0;
+
+      for (const movieId in user1) {
+        if (user2[movieId] !== undefined) {
+          similarity += user1[movieId] * user2[movieId]; // Simple dot product
+          commonMovies++;
+        }
+      }
+
+      return commonMovies > 0 ? similarity / commonMovies : 0;
+    }
+
+    // Generate recommendations
+    function calculateRecommendations() {
+      const similarities = otherUsers.map((user) => ({
+        userId: user.id,
+        similarity: calculateSimilarity(userRatings, user.ratings)
+      }));
+
+      // Find most similar user
+      const mostSimilarUser = similarities.sort((a, b) => b.similarity - a.similarity)[0];
+
+      if (mostSimilarUser.similarity > 0) {
+        const similarUserRatings = otherUsers.find(u => u.id === mostSimilarUser.userId).ratings;
+        const recommendations = Object.keys(similarUserRatings)
+          .filter(movieId => !userRatings[movieId]) // Only recommend movies the user hasn’t rated
+          .sort((a, b) => similarUserRatings[b] - similarUserRatings[a]) // Sort by rating
+          .map(movieId => movies.find(m => m.id == movieId).title);
+
+        renderRecommendations(recommendations);
+      }
+    }
+
+    // Render recommendations
+    function renderRecommendations(recommendations) {
+      const recommendationsList = document.getElementById("recommendations-list");
+      recommendationsList.innerHTML = "";
+      recommendations.forEach((rec) => {
+        const listItem = document.createElement("li");
+        listItem.textContent = rec;
+        recommendationsList.appendChild(listItem);
+      });
+    }
+
+    // Initialize app
+    renderMovies();
+  </script>
+</body>
+</html>
